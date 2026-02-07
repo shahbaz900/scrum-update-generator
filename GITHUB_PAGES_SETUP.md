@@ -11,7 +11,9 @@ Ensure GitHub Pages has been enabled
 ### Solution (2 minutes)
 
 1. **Go to Settings**
-   - Navigate to: `https://github.com/YOUR_USERNAME/scrum-update-generator/settings/pages`
+   - Navigate to: `https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/settings/pages`
+   - Replace `YOUR_USERNAME` with your GitHub username
+   - Replace `YOUR_REPO_NAME` with your repository name
    - Or: Repository → Settings → Pages
 
 2. **Enable GitHub Pages**
@@ -24,7 +26,9 @@ Ensure GitHub Pages has been enabled
    - Click "Run workflow" → "Run workflow"
 
 4. **Access Your Site**
-   - After 2-3 minutes, visit: `https://YOUR_USERNAME.github.io/scrum-update-generator/`
+   - After 2-3 minutes, visit: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`
+   - Replace `YOUR_USERNAME` with your GitHub username
+   - Replace `YOUR_REPO_NAME` with your repository name (e.g., `scrum-update-generator`)
 
 ### Important Note
 

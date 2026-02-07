@@ -118,7 +118,7 @@ Then add environment variables in Vercel dashboard.
 
 1. Enable GitHub Pages in repository settings: **Settings** → **Pages** → Source: **GitHub Actions**
 2. Push to `main` branch or manually trigger the workflow
-3. Access at: `https://YOUR_USERNAME.github.io/scrum-update-generator/`
+3. Access at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`
 
 For full functionality with API routes, use Vercel or Docker.
 

@@ -22,7 +22,7 @@ This guide covers deploying the Scrum Update Generator to various platforms.
 Before the workflow can deploy, you **must** enable GitHub Pages in your repository settings:
 
 1. Go to your repository on GitHub
-2. Navigate to **Settings** → **Pages** (or visit `https://github.com/YOUR_USERNAME/scrum-update-generator/settings/pages`)
+2. Navigate to **Settings** → **Pages** (or visit `https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/settings/pages`)
 3. Under **Source**, select **GitHub Actions** from the dropdown
 4. Click **Save**
 
@@ -62,8 +62,12 @@ images: { unoptimized: true }  // Required for static export
 
 After successful deployment, your app will be available at:
 ```
-https://YOUR_USERNAME.github.io/scrum-update-generator/
+https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/
 ```
+
+Replace:
+- `YOUR_USERNAME` with your GitHub username
+- `YOUR_REPO_NAME` with your repository name
 
 ### Troubleshooting GitHub Pages
 
@@ -88,7 +92,7 @@ Vercel is the **recommended platform** for this Next.js app (fastest and easiest
 
 ### Quick Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/shahbaz900/scrum-update-generator)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
 ### Manual Deployment
 
