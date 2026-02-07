@@ -99,7 +99,11 @@ Returns a streaming text response with the generated scrum update.
 
 ## Deployment
 
-### Vercel (Recommended - Fastest)
+> 📘 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Quick Deploy Options
+
+#### Vercel (Recommended - Fastest)
 
 ```bash
 npm install -g vercel
@@ -108,17 +112,26 @@ vercel
 
 Then add environment variables in Vercel dashboard.
 
-### Docker
+#### GitHub Pages
 
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+⚠️ **Important**: GitHub Pages only serves static files. API routes will **not work** on GitHub Pages.
+
+1. Enable GitHub Pages in repository settings: **Settings** → **Pages** → Source: **GitHub Actions**
+2. Push to `main` branch or manually trigger the workflow
+3. Access at: `https://YOUR_USERNAME.github.io/scrum-update-generator/`
+
+For full functionality with API routes, use Vercel or Docker.
+
+#### Docker
+
+```bash
+docker build -t scrum-update-generator .
+docker run -p 3000:3000 \
+  -e JIRA_URL=https://your-domain.atlassian.net \
+  -e JIRA_EMAIL=your@email.com \
+  -e JIRA_API_TOKEN=your-token \
+  -e CLAUDE_API_KEY=your-key \
+  scrum-update-generator
 ```
 
 ## Troubleshooting
