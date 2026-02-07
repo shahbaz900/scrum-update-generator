@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import html2pdf from "html2pdf.js";
 import { saveScrum } from "@/lib/supabase";
 
 interface Credentials {
@@ -30,16 +29,19 @@ function formatDateWithDay(dateStr: string): string {
   return `${dayName}, ${formatted}`;
 }
 
-function downloadPDF(output: string) {
+async function downloadPDF(output: string) {
   const element = document.getElementById("scrum-output-pdf");
   if (!element) return;
+
+  // Dynamically import html2pdf to avoid SSR issues
+  const html2pdf = (await import("html2pdf.js")).default;
 
   const opt = {
     margin: 10,
     filename: `scrum-update-${new Date().toISOString().split("T")[0]}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
+    image: { type: "jpeg" as const, quality: 0.98 },
     html2canvas: { scale: 2 },
-    jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+    jsPDF: { orientation: "portrait" as const, unit: "mm" as const, format: "a4" as const },
   };
 
   html2pdf().set(opt).from(element).save();
