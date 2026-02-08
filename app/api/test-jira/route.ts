@@ -14,18 +14,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Test the connection by fetching issues
-    await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    console.log(`✓ Jira connection successful. Found ${issues.length} issues.`);
 
     return NextResponse.json({
       success: true,
       message: "Connection successful!",
+      issueCount: issues.length,
     });
   } catch (error) {
     console.error("Error testing Jira connection:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to test connection";
+    console.error("Error details:", errorMessage);
+    
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to test connection",
+        error: errorMessage,
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     );
