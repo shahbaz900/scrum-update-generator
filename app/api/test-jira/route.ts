@@ -3,8 +3,21 @@ import { fetchJiraIssues } from "@/lib/jira";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    console.log("Test Jira endpoint called");
+    
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.error("Failed to parse JSON:", e);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
     const { jiraUrl, jiraEmail, jiraToken } = body;
+    console.log("Credentials received:", { jiraUrl, jiraEmail, jiraToken: jiraToken ? "***" : "missing" });
 
     if (!jiraUrl || !jiraEmail || !jiraToken) {
       return NextResponse.json(
@@ -14,6 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Test the connection by fetching issues
+    console.log("Attempting to fetch Jira issues...");
     const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
     console.log(`✓ Jira connection successful. Found ${issues.length} issues.`);
 
@@ -24,13 +38,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error testing Jira connection:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to test connection";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error details:", errorMessage);
     
     return NextResponse.json(
       {
         error: errorMessage,
-        details: error instanceof Error ? error.message : String(error),
+        details: error instanceof Error ? error.stack : String(error),
       },
       { status: 500 },
     );
