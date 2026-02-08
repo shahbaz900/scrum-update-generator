@@ -75,7 +75,7 @@ export async function fetchJiraIssues(
     const baseUrl = url.endsWith("/") ? url.slice(0, -1) : url;
 
     const response = await axios.post(
-      `${baseUrl}/rest/api/3/search`,
+      `${baseUrl}/rest/api/3/search/jql`,
       {
         jql,
         maxResults: 100,
