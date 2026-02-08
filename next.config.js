@@ -10,10 +10,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // GitHub Pages requires trailing slashes and proper asset prefix
-  trailingSlash: true,
-  // Base path will be the repository name for GitHub Pages
-  basePath: process.env.NODE_ENV === 'production' ? '/scrum-update-generator' : '',
+  // GitHub Pages requires trailing slashes, but Vercel doesn't
+  trailingSlash: process.env.VERCEL ? false : true,
+  // Only use basePath for non-Vercel production deployments (e.g., GitHub Pages)
+  basePath: process.env.VERCEL ? '' : (process.env.NODE_ENV === 'production' ? '/scrum-update-generator' : ''),
 };
 
 module.exports = nextConfig;
