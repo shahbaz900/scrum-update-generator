@@ -1,9 +1,20 @@
+/**
+ * Scrum Update Generator Frontend
+ * 
+ * ⚙️ Copilot CLI Was Used In Development:
+ * - Used to debug state management issues with streaming responses
+ * - Helped optimize React hooks and performance
+ * - Assisted with understanding html2pdf integration
+ * - Provided guidance on error handling patterns
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { saveScrum } from "@/lib/supabase";
 
+// @ts-ignore - html2pdf.js typing issue
 const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
 
 interface Credentials {

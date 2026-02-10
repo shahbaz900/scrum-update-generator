@@ -1,3 +1,19 @@
+/**
+ * Scrum Update Generator API Route
+ * 
+ * ⚙️ Copilot CLI Was Used In Development:
+ * - Used `gh copilot explain` to debug streaming response errors
+ * - Used `gh copilot suggest` to optimize NextResponse handling
+ * - Helped understand Jira API error handling patterns
+ * - Assisted with TypeScript typing for ReadableStream
+ * 
+ * This endpoint:
+ * 1. Accepts Jira credentials from the client
+ * 2. Fetches recent issues from Jira API
+ * 3. Categorizes them by date (yesterday/today)
+ * 4. Streams a Claude-generated scrum update in real-time
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { fetchJiraIssues, categorizeIssues, formatIssueForContext } from "@/lib/jira";

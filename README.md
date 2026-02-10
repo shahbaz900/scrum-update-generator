@@ -121,6 +121,58 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
+## Copilot CLI Usage
+
+This project was developed using **GitHub Copilot CLI** to accelerate development:
+
+- **Code Explanation**: Used `gh copilot explain` to understand Jira API error responses
+- **Command Suggestions**: Used `gh copilot suggest` to optimize TypeScript configurations
+- **Debugging**: Helped debug Claude streaming responses and error handling
+- **Code Reviews**: Used Copilot CLI to understand best practices for Next.js API routes
+
+### How to Use Copilot CLI with This Project
+
+```bash
+# Install GitHub CLI first
+gh auth login
+
+# Install Copilot CLI extension
+gh extension install github/gh-copilot
+
+# Ask for help while developing
+gh copilot suggest "fix typescript error in nextjs api route"
+gh copilot explain "this streaming response handler"
+```
+
+## Testing Instructions for Judges
+
+To test this application, you'll need:
+
+1. **Jira Access** (Free/Standard tier works)
+   - Create a Jira Cloud instance or use an existing one
+   - Generate an API token from https://id.atlassian.com/manage-profile/security/api-tokens
+   - Make sure you have at least 1-2 issues in your Jira board
+
+2. **Claude API Key**
+   - Get one from https://console.anthropic.com/api_keys
+   - No paid plan required - free tier works
+
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   # Then fill in with your actual credentials:
+   # JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN, CLAUDE_API_KEY
+   ```
+
+4. **Run & Test**
+   ```bash
+   npm install
+   npm run dev
+   # Open http://localhost:3000
+   # Click "Generate Scrum Update" button
+   # Watch as it fetches your Jira issues and generates an update
+   ```
+
 ## Troubleshooting
 
 **"Missing Jira configuration"**
