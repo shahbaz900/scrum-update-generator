@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { saveScrum } from "@/lib/supabase";
 
 const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
