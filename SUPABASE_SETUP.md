@@ -68,6 +68,7 @@ CREATE POLICY "Users can insert their own records"
 ## Viewing Saved Scrum Updates
 
 You can view your saved scrum updates in the Supabase Console:
+
 1. Go to your project → **Table Editor**
 2. Select the `scrum_updates` table
 3. Browse all your saved updates
@@ -75,10 +76,10 @@ You can view your saved scrum updates in the Supabase Console:
 ## API Integration
 
 The app will automatically save to Supabase when you click the **Save** button. The data stored includes:
+
 - User email
 - Generated timestamp
 - Input (Jira issues context)
 - Output (Claude's response)
 - Timezone
 - Public holidays used
-

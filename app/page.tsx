@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import html2pdf from "html2pdf.js";
+import dynamic from "next/dynamic";
 import { saveScrum } from "@/lib/supabase";
+
+const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
 
 interface Credentials {
   jiraUrl: string;
@@ -60,7 +62,7 @@ function shareOnTeams(text: string) {
   const encodedText = encodeURIComponent(text);
   window.open(
     `https://teams.microsoft.com/share?text=${encodedText}`,
-    "_blank"
+    "_blank",
   );
 }
 
@@ -560,9 +562,7 @@ export default function Home() {
 
               <button
                 className="button-action"
-                onClick={() =>
-                  copyToClipboard(extractPlainText(output))
-                }
+                onClick={() => copyToClipboard(extractPlainText(output))}
                 title="Copy to clipboard"
               >
                 📋 Copy
@@ -570,9 +570,7 @@ export default function Home() {
 
               <button
                 className="button-action"
-                onClick={() =>
-                  shareOnWhatsApp(extractPlainText(output))
-                }
+                onClick={() => shareOnWhatsApp(extractPlainText(output))}
                 title="Share on WhatsApp"
               >
                 💬 WhatsApp
