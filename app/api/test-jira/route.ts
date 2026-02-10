@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Test the connection by fetching issues
-    await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    console.log(`Connection successful. Found ${issues.length} issues.`);
 
     return NextResponse.json({
       success: true,
       message: "Connection successful!",
+      issueCount: issues.length,
     });
   } catch (error) {
     console.error("Error testing Jira connection:", error);
