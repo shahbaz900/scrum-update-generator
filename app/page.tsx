@@ -635,51 +635,53 @@ export default function Home() {
                       <h2>Daily Update <span className="date-separator">—</span> <span className="date-text">{todayDate}</span></h2>
                     </div>
 
-                    <div className="output-section">
-                      <div className="output-section-title">
-                        Yesterday — {sections.yesterdayDate ? formatDateWithDay(sections.yesterdayDate) : "Date N/A"}
+                    <div className="cards-container">
+                      <div className="output-card">
+                        <div className={`output-section-title ${sections.yesterday && sections.yesterday.trim() ? 'status-green' : isSectionLocked(output, 'YESTERDAY', 'TODAY') ? 'status-orange' : ''}`}>
+                          Yesterday — {sections.yesterdayDate ? formatDateWithDay(sections.yesterdayDate) : "Date N/A"}
+                        </div>
+                        <ul>
+                          {sections.yesterday && sections.yesterday.trim() ? (
+                            renderSection(sections.yesterday)
+                          ) : isSectionLocked(output, 'YESTERDAY', 'TODAY') ? (
+                            <li>No activities recorded</li>
+                          ) : (
+                            <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                          )}
+                        </ul>
                       </div>
-                      <ul>
-                        {sections.yesterday && sections.yesterday.trim() ? (
-                          renderSection(sections.yesterday)
-                        ) : isSectionLocked(output, 'YESTERDAY', 'TODAY') ? (
-                          <li>No activities recorded</li>
-                        ) : (
-                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
-                        )}
-                      </ul>
-                    </div>
 
-                    <div className="output-section">
-                      <div className="output-section-title">
-                        Today — {sections.todayDate ? formatDateWithDay(sections.todayDate) : "Date N/A"}
+                      <div className="output-card">
+                        <div className={`output-section-title ${sections.today && sections.today.trim() ? 'status-green' : isSectionLocked(output, 'TODAY', 'BLOCKERS') && !sections.isWeekend ? 'status-orange' : ''}`}>
+                          Today — {sections.todayDate ? formatDateWithDay(sections.todayDate) : "Date N/A"}
+                        </div>
+                        <ul>
+                          {sections.today && sections.today.trim() ? (
+                            renderSection(sections.today)
+                          ) : sections.isWeekend && isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
+                            <li>It's the weekend</li>
+                          ) : isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
+                            <li>No activities recorded</li>
+                          ) : (
+                            <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                          )}
+                        </ul>
                       </div>
-                      <ul>
-                        {sections.today && sections.today.trim() ? (
-                          renderSection(sections.today)
-                        ) : sections.isWeekend && isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
-                          <li>It's the weekend</li>
-                        ) : isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
-                          <li>No activities recorded</li>
-                        ) : (
-                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
-                        )}
-                      </ul>
-                    </div>
 
-                    <div className="output-section">
-                      <div className="output-section-title">
-                        Blockers
+                      <div className="output-card">
+                        <div className={`output-section-title ${sections.blockers && sections.blockers.trim() ? 'status-red' : isSectionLocked(output, 'BLOCKERS', null) ? 'status-green' : ''}`}>
+                          Blockers
+                        </div>
+                        <ul>
+                          {sections.blockers && sections.blockers.trim() ? (
+                            renderSection(sections.blockers)
+                          ) : isSectionLocked(output, 'BLOCKERS', null) ? (
+                            <li>None</li>
+                          ) : (
+                            <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                          )}
+                        </ul>
                       </div>
-                      <ul>
-                        {sections.blockers && sections.blockers.trim() ? (
-                          renderSection(sections.blockers)
-                        ) : isSectionLocked(output, 'BLOCKERS', null) ? (
-                          <li>None</li>
-                        ) : (
-                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
-                        )}
-                      </ul>
                     </div>
                   </div>
                 );
