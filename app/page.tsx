@@ -65,9 +65,9 @@ async function downloadPDF(output: string) {
   html2pdf().set(opt).from(element).save();
 }
 
-function copyToClipboard(text: string) {
+function copyToClipboard(text: string, onCopy: (msg: string) => void) {
   navigator.clipboard.writeText(text).then(() => {
-    alert("Copied to clipboard!");
+    onCopy("✅ Copied to clipboard!");
   });
 }
 
@@ -116,6 +116,17 @@ export default function Home() {
   const [jiraIssuesInput, setJiraIssuesInput] = useState(""); // Store input for saving
   const [generationTime, setGenerationTime] = useState<Date | null>(null); // Store when generated
   const [isSaving, setIsSaving] = useState(false);
+  const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
+
+  // Auto-dismiss tooltip after 5 seconds
+  useEffect(() => {
+    if (tooltipMessage) {
+      const timer = setTimeout(() => {
+        setTooltipMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [tooltipMessage]);
 
   // Load credentials from localStorage on mount
   useEffect(() => {
@@ -152,6 +163,19 @@ export default function Home() {
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Save public holidays immediately when changed
+  useEffect(() => {
+    if (setupForm.publicHolidays.length > 0 || setupForm.jiraUrl) {
+      const updatedCreds = {
+        ...setupForm,
+      };
+      localStorage.setItem("scrumUpdateCreds", JSON.stringify(updatedCreds));
+      if (setupForm.jiraUrl && setupForm.jiraEmail && setupForm.jiraToken) {
+        setCredentials(updatedCreds);
+      }
+    }
+  }, [setupForm.publicHolidays]);
 
   const handleSetupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -246,6 +270,7 @@ export default function Home() {
 
       const decoder = new TextDecoder();
       let result = "";
+      let hasReceivedContent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -253,6 +278,13 @@ export default function Home() {
 
         const chunk = decoder.decode(value, { stream: true });
         result += chunk;
+        
+        // Stop showing "Generating..." as soon as first chunk arrives
+        if (!hasReceivedContent) {
+          hasReceivedContent = true;
+          setLoading(false);
+        }
+        
         setOutput(result);
       }
     } catch (err) {
@@ -319,6 +351,21 @@ export default function Home() {
     };
   };
 
+  // Check if a section has been fully received by checking if its marker and next marker exist
+  const isSectionLocked = (text: string, currentMarker: string, nextMarker: string | null): boolean => {
+    const hasCurrentMarker = text.includes(`[${currentMarker}]`);
+    if (!hasCurrentMarker) return false;
+    
+    // If there's a next marker, we need both markers to confirm section is received
+    if (nextMarker) {
+      return text.includes(`[${nextMarker}]`);
+    }
+    
+    // For the last section (BLOCKERS), check if all three markers are present
+    // This indicates streaming is complete
+    return text.includes(`[YESTERDAY]`) && text.includes(`[TODAY]`) && text.includes(`[BLOCKERS]`);
+  };
+
   const renderSection = (content: string) => {
     return content
       .split("\n")
@@ -332,140 +379,157 @@ export default function Home() {
   if (showSetup || !credentials) {
     return (
       <main>
-        <div className="container">
-          <h1>⚡ Scrum Update Generator</h1>
-          <p>
-            Connect your Jira account and generate lightning-fast scrum updates
-            with AI
-          </p>
-
-          <div className="setup-form">
-            <h2>Setup Your Jira Connection</h2>
-
-            <div className="form-group">
-              <label>Jira Organization URL</label>
-              <input
-                type="text"
-                name="jiraUrl"
-                placeholder="https://your-company.atlassian.net"
-                value={setupForm.jiraUrl}
-                onChange={handleSetupChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Jira Email</label>
-              <input
-                type="email"
-                name="jiraEmail"
-                placeholder="your-email@company.com"
-                value={setupForm.jiraEmail}
-                onChange={handleSetupChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>
-                Jira API Token{" "}
-                <a
-                  href="https://id.atlassian.com/manage-profile/security/api-tokens"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: "0.85rem", color: "#667eea" }}
-                >
-                  (Get Token)
-                </a>
-              </label>
-              <input
-                type="password"
-                name="jiraToken"
-                placeholder="Your API Token"
-                value={setupForm.jiraToken}
-                onChange={handleSetupChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Public Holidays (Optional)</label>
-              <p
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#718096",
-                  margin: "0.5rem 0 1rem 0",
-                }}
-              >
-                Select dates that are public holidays. These will be skipped
-                when showing work updates.
+        <div className="setup-container">
+          <div className="setup-sidebar">
+            <div className="sidebar-content">
+              <h2>Connect Your Jira Workspace</h2>
+              <p>
+                Securely integrate your Jira account to generate automated daily
+                scrum updates using AI.
               </p>
-              <input
-                type="date"
-                id="holidayInput"
-                style={{ marginBottom: "0.8rem" }}
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter") {
-                    addHoliday((e.target as HTMLInputElement).value);
-                    (e.target as HTMLInputElement).value = "";
-                  }
-                }}
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                  if (e.target.value) {
-                    addHoliday(e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-              />
-              {setupForm.publicHolidays.length > 0 && (
-                <div
-                  style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}
-                >
-                  {setupForm.publicHolidays.map((holiday) => (
-                    <div
-                      key={holiday}
-                      style={{
-                        background: "#edf2f7",
-                        padding: "0.5rem 0.8rem",
-                        borderRadius: "4px",
-                        fontSize: "0.85rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      {holiday}
-                      <button
-                        type="button"
-                        onClick={() => removeHoliday(holiday)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#718096",
-                          cursor: "pointer",
-                          fontSize: "1rem",
-                          padding: "0",
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+              
+              <div className="features-list">
+                <div className="feature-item">
+                  <span className="feature-icon">•</span>
+                  <span>Enterprise-grade security</span>
                 </div>
-              )}
+                <div className="feature-item">
+                  <span className="feature-icon">•</span>
+                  <span>Encrypted credential storage</span>
+                </div>
+                <div className="feature-item">
+                  <span className="feature-icon">•</span>
+                  <span>GDPR compliant</span>
+                </div>
+              </div>
+
+              <div className="sidebar-help">
+                <p>Need help?</p>
+                <a 
+                  href="/docs"
+                  className="help-link"
+                >
+                  View documentation →
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="setup-form-container">
+            <div className="form-header">
+              <h1>Scrum Update Generator</h1>
+              <p>Setup Jira Integration</p>
+              <p className="form-subtitle">
+                Connect your Jira account and generate lightning-fast scrum updates with AI
+              </p>
             </div>
 
-            {error && <div className="error">❌ {error}</div>}
+            <div className="setup-form">
+              <div className="form-group">
+                <label>Jira Organization URL</label>
+                <input
+                  type="text"
+                  name="jiraUrl"
+                  placeholder="https://your-company.atlassian.net"
+                  value={setupForm.jiraUrl}
+                  onChange={handleSetupChange}
+                />
+              </div>
 
-            <button
-              className={`button ${testing ? "loading" : ""}`}
-              onClick={testConnection}
-              disabled={
-                testing ||
-                !setupForm.jiraUrl ||
-                !setupForm.jiraEmail ||
-                !setupForm.jiraToken
-              }
-            >
-              {testing ? "🔄 Testing..." : "✅ Test & Connect"}
-            </button>
+              <div className="form-group">
+                <label>Jira Email</label>
+                <input
+                  type="email"
+                  name="jiraEmail"
+                  placeholder="your-email@company.com"
+                  value={setupForm.jiraEmail}
+                  onChange={handleSetupChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  Jira API Token{" "}
+                  <a
+                    href="https://id.atlassian.com/manage-profile/security/api-tokens"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="token-link"
+                  >
+                    (Get Token)
+                  </a>
+                </label>
+                <input
+                  type="password"
+                  name="jiraToken"
+                  placeholder="Your API Token"
+                  value={setupForm.jiraToken}
+                  onChange={handleSetupChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Public Holidays (Optional)</label>
+                <p className="help-text">
+                  Select dates that are public holidays. These will be skipped
+                  when showing work updates.
+                </p>
+                <input
+                  type="date"
+                  id="holidayInput"
+                  className="date-input"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    if (e.target.value) {
+                      addHoliday(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === "Enter") {
+                      addHoliday((e.target as HTMLInputElement).value);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    if (e.target.value) {
+                      addHoliday(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                {setupForm.publicHolidays.length > 0 && (
+                  <div className="holidays-tags">
+                    {setupForm.publicHolidays.map((holiday) => (
+                      <div key={holiday} className="holiday-tag">
+                        {holiday}
+                        <button
+                          type="button"
+                          onClick={() => removeHoliday(holiday)}
+                          className="tag-remove"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {error && <div className="error">{error}</div>}
+
+              <button
+                className={`button button-primary ${testing ? "loading" : ""}`}
+                onClick={testConnection}
+                disabled={
+                  testing ||
+                  !setupForm.jiraUrl ||
+                  !setupForm.jiraEmail ||
+                  !setupForm.jiraToken
+                }
+              >
+                {testing ? "Testing..." : "Test & Connect"}
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -477,121 +541,60 @@ export default function Home() {
     <main>
       <div className="container">
         <div className="header">
-          <div>
-            <h1>⚡ Scrum Update Generator</h1>
-            <div className="header-info">
-              Connected as {credentials.jiraEmail} | {currentDateTime}
+          <div className="header-left">
+            <div className="app-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="24" height="24" rx="6" fill="#2563EB"/>
+                <path d="M7 8H17" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M7 12H17" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M7 16H12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h1>Scrum Update Generator</h1>
+          </div>
+          
+          <div className="header-right">
+            <div className="user-info">
+              <div className="user-email">{credentials.jiraEmail}</div>
+              <button className="change-account-link" onClick={logout}>Change Account</button>
+            </div>
+            <div className="user-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </div>
           </div>
-          <button className="button-small" onClick={logout}>
-            🔄 Change Account
-          </button>
         </div>
 
-        <button
-          className={`button ${loading ? "loading" : ""}`}
-          onClick={generateScrumUpdate}
-          disabled={loading}
-        >
-          {loading ? "⏳ Generating..." : "🚀 Generate Scrum Update"}
-        </button>
-
-        {error && <div className="error">❌ Error: {error}</div>}
-
-        {output && (
-          <div className="output" id="scrum-output-pdf">
-            {(() => {
-              const sections = parseOutputSections(output);
-              return (
-                <div className="section">
-                  <div className="output-section">
-                    <div className="output-section-title">
-                      ✅ Yesterday
-                      {sections.yesterdayDate &&
-                        ` - ${formatDateWithDay(sections.yesterdayDate)}`}
-                    </div>
-                    <ul>
-                      {sections.yesterday && sections.yesterday.trim() ? (
-                        renderSection(sections.yesterday)
-                      ) : (
-                        <li>No activities recorded</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  <div className="output-section">
-                    <div className="output-section-title">
-                      ✅ Today{sections.isWeekend ? " (Weekend)" : ""}
-                      {sections.todayDate &&
-                        ` - ${formatDateWithDay(sections.todayDate)}`}
-                    </div>
-                    <ul>
-                      {sections.today && sections.today.trim() ? (
-                        renderSection(sections.today)
-                      ) : sections.isWeekend ? (
-                        <li>It's the weekend</li>
-                      ) : (
-                        <li>No activities recorded</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  <div className="output-section">
-                    <div className="output-section-title">
-                      🚧 Blockers & Impediments
-                    </div>
-                    <ul>
-                      {sections.blockers && sections.blockers.trim() ? (
-                        renderSection(sections.blockers)
-                      ) : (
-                        <li>No blockers identified</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {output && (
-                    <p className="output-note">
-                      Note: This is an automatically generated, it appears very
-                      minimal.
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Action Buttons */}
-            <div
-              style={{
-                display: "flex",
-                gap: "0.8rem",
-                flexWrap: "wrap",
-                marginTop: "2rem",
-                paddingTop: "1.5rem",
-                borderTop: "1px solid #e2e8f0",
-              }}
+        <div className="toolbar-container">
+          <div className="left-actions">
+            <button
+              className={`button ${loading ? "loading" : ""}`}
+              onClick={generateScrumUpdate}
+              disabled={loading}
             >
+              <span className="icon">📄</span>
+              {loading ? "Generating..." : "Generate Scrum Update"}
+            </button>
+          </div>
+
+          {output && (
+            <div className="right-actions">
               <button
                 className="button-action"
                 onClick={() => downloadPDF(output)}
                 title="Download as PDF"
               >
-                📥 PDF
+                <span style={{ marginRight: '6px' }}>📄</span> PDF
               </button>
 
               <button
                 className="button-action"
-                onClick={() => copyToClipboard(extractPlainText(output))}
+                onClick={() => copyToClipboard(extractPlainText(output), setTooltipMessage)}
                 title="Copy to clipboard"
               >
-                📋 Copy
-              </button>
-
-              <button
-                className="button-action"
-                onClick={() => shareOnWhatsApp(extractPlainText(output))}
-                title="Share on WhatsApp"
-              >
-                💬 WhatsApp
+                <span style={{ marginRight: '6px' }}>📋</span> Copy
               </button>
 
               <button
@@ -599,7 +602,7 @@ export default function Home() {
                 onClick={() => shareOnTeams(extractPlainText(output))}
                 title="Share on Microsoft Teams"
               >
-                👥 Teams
+                <span style={{ marginRight: '6px' }}>👥</span> Teams
               </button>
 
               <button
@@ -607,27 +610,96 @@ export default function Home() {
                 onClick={() => shareViaEmail(extractPlainText(output))}
                 title="Share via Email"
               >
-                📧 Email
-              </button>
-
-              <button
-                className={`button-action ${isSaving ? "loading" : ""}`}
-                onClick={handleSaveScrum}
-                disabled={isSaving}
-                title="Save to Supabase"
-              >
-                {isSaving ? "💾 Saving..." : "💾 Save"}
+                <span style={{ marginRight: '6px' }}>📧</span> Email
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {loading && !output && (
-          <div className="loading">
-            🔄 Fetching Jira data and generating with Claude...
-          </div>
-        )}
+        <div className="main-output">
+          {error && <div className="error">❌ Error: {error}</div>}
+
+          {output && (
+            <div className="output" id="scrum-output-pdf">
+              {(() => {
+                const sections = parseOutputSections(output);
+                const todayDate = new Date().toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                });
+                
+                return (
+                  <div className="section">
+                    <div className="daily-update-header">
+                      <h2>Daily Update <span className="date-separator">—</span> <span className="date-text">{todayDate}</span></h2>
+                    </div>
+
+                    <div className="output-section">
+                      <div className="output-section-title">
+                        Yesterday — {sections.yesterdayDate ? formatDateWithDay(sections.yesterdayDate) : "Date N/A"}
+                      </div>
+                      <ul>
+                        {sections.yesterday && sections.yesterday.trim() ? (
+                          renderSection(sections.yesterday)
+                        ) : isSectionLocked(output, 'YESTERDAY', 'TODAY') ? (
+                          <li>No activities recorded</li>
+                        ) : (
+                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <div className="output-section">
+                      <div className="output-section-title">
+                        Today — {sections.todayDate ? formatDateWithDay(sections.todayDate) : "Date N/A"}
+                      </div>
+                      <ul>
+                        {sections.today && sections.today.trim() ? (
+                          renderSection(sections.today)
+                        ) : sections.isWeekend && isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
+                          <li>It's the weekend</li>
+                        ) : isSectionLocked(output, 'TODAY', 'BLOCKERS') ? (
+                          <li>No activities recorded</li>
+                        ) : (
+                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <div className="output-section">
+                      <div className="output-section-title">
+                        Blockers
+                      </div>
+                      <ul>
+                        {sections.blockers && sections.blockers.trim() ? (
+                          renderSection(sections.blockers)
+                        ) : isSectionLocked(output, 'BLOCKERS', null) ? (
+                          <li>None</li>
+                        ) : (
+                          <li style={{color: '#9ca3af', fontStyle: 'italic'}}>⏳ Generating...</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {loading && !output && (
+            <div className="loading">
+              🔄 Fetching Jira data and generating with Claude...
+            </div>
+          )}
+        </div>
       </div>
+
+      {tooltipMessage && (
+        <div className="tooltip-notification">
+          {tooltipMessage}
+        </div>
+      )}
     </main>
   );
 }

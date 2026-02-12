@@ -41,9 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get Claude key from env
     const claudeKey = process.env.CLAUDE_API_KEY;
-    //claude api key
     if (!claudeKey) {
       return NextResponse.json(
         { error: "Claude API key not configured" },
@@ -51,18 +49,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch Jira issues with provided credentials
     const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
-    console.log(`📊 Fetched ${issues.length} issues from Jira`);
-    console.log(`🕐 Timezone offset: ${timezoneOffsetMinutes} minutes`);
-
     const categorized = categorizeIssues(
       issues,
       publicHolidays,
       timezoneOffsetMinutes,
-    );
-    console.log(
-      `📅 Categorized: Yesterday=${categorized.yesterday.length}, Today=${categorized.today.length}, Blockers=${categorized.blockers.length}`,
     );
 
     // Format issues for Claude with rich context (comments, worklogs, changelog)
