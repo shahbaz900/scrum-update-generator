@@ -6,14 +6,10 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   pageExtensions: ["js", "jsx", "ts", "tsx"],
-  output: 'export',
+  // Removed 'output: export' to enable API routes in production
   images: {
     unoptimized: true,
   },
-  // GitHub Pages requires trailing slashes, but Vercel doesn't
-  trailingSlash: process.env.VERCEL ? false : true,
-  // Only use basePath for non-Vercel production deployments (e.g., GitHub Pages)
-  basePath: process.env.VERCEL ? '' : (process.env.NODE_ENV === 'production' ? '/scrum-update-generator' : ''),
 };
 
 module.exports = nextConfig;
