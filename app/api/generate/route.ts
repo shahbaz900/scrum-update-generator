@@ -41,7 +41,11 @@ export async function POST(request: NextRequest) {
 
     // Fetch Jira issues with provided credentials
     const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    console.log(`📊 Fetched ${issues.length} issues from Jira`);
+    console.log(`🕐 Timezone offset: ${timezoneOffsetMinutes} minutes`);
+    
     const categorized = categorizeIssues(issues, publicHolidays, timezoneOffsetMinutes);
+    console.log(`📅 Categorized: Yesterday=${categorized.yesterday.length}, Today=${categorized.today.length}, Blockers=${categorized.blockers.length}`);
 
     // Format issues for Claude with rich context (comments, worklogs, changelog)
     const issuesText = `

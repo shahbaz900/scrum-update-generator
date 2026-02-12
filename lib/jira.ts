@@ -68,8 +68,9 @@ export async function fetchJiraIssues(
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
     const todayStr = today.toISOString().split("T")[0];
 
-    // JQL query to get recent issues
-    const jql = `assignee = currentUser() AND (updated >= ${sevenDaysAgoStr} OR created >= ${sevenDaysAgoStr}) ORDER BY updated DESC`;
+    // JQL query to get recent issues INCLUDING subtasks and worklog activity
+    // This will fetch both parent issues and subtasks assigned to current user
+    const jql = `assignee = currentUser() AND (updated >= ${sevenDaysAgoStr} OR created >= ${sevenDaysAgoStr} OR worklogDate >= ${sevenDaysAgoStr}) ORDER BY updated DESC`;
 
     // Remove trailing slash if present
     const baseUrl = url.endsWith("/") ? url.slice(0, -1) : url;
@@ -104,6 +105,12 @@ export async function fetchJiraIssues(
         },
       },
     );
+
+    console.log(`🔍 JQL Query: ${jql}`);
+    console.log(`📊 Found ${response.data.issues?.length || 0} issues`);
+    if (response.data.issues && response.data.issues.length > 0) {
+      console.log(`📝 First issue: ${response.data.issues[0].key} - Updated: ${response.data.issues[0].fields.updated}`);
+    }
 
     return response.data.issues || [];
   } catch (error) {
@@ -213,17 +220,42 @@ export function categorizeIssues(
   const todayDayOfWeek = now.getUTCDay();
   const isWeekend = todayDayOfWeek === 0 || todayDayOfWeek === 6; // Sunday or Saturday
 
+  console.log(`📅 Today: ${todayStr}, Is Weekend: ${isWeekend}`);
+
   // Group issues by date (in user's timezone)
+  // Use the most recent date from: updated, worklog, or comment
   const issuesByDate: { [key: string]: JiraIssue[] } = {};
   issues.forEach((issue) => {
-    const date = new Date(issue.fields.updated);
-    date.setMinutes(date.getMinutes() + timezoneOffsetMinutes);
-    const dateStr = getTodayStr(date);
+    // Check for most recent activity date
+    let mostRecentDate = new Date(issue.fields.updated);
+    
+    // Check worklogs for more recent activity
+    if (issue.fields.worklog?.worklogs && issue.fields.worklog.worklogs.length > 0) {
+      const latestWorklog = issue.fields.worklog.worklogs[issue.fields.worklog.worklogs.length - 1];
+      const worklogDate = new Date(latestWorklog.started);
+      if (worklogDate > mostRecentDate) {
+        mostRecentDate = worklogDate;
+      }
+    }
+    
+    // Check comments for more recent activity
+    if (issue.fields.comment?.comments && issue.fields.comment.comments.length > 0) {
+      const latestComment = issue.fields.comment.comments[issue.fields.comment.comments.length - 1];
+      const commentDate = new Date(latestComment.created);
+      if (commentDate > mostRecentDate) {
+        mostRecentDate = commentDate;
+      }
+    }
+    
+    mostRecentDate.setMinutes(mostRecentDate.getMinutes() + timezoneOffsetMinutes);
+    const dateStr = getTodayStr(mostRecentDate);
     if (!issuesByDate[dateStr]) {
       issuesByDate[dateStr] = [];
     }
     issuesByDate[dateStr].push(issue);
   });
+
+  console.log(`📊 Issues grouped by date:`, Object.keys(issuesByDate).map(date => `${date}: ${issuesByDate[date].length}`).join(', '));
 
   // Find working days: prioritize weekdays, skip weekends
   const workingDays: string[] = [];
@@ -272,6 +304,9 @@ export function categorizeIssues(
   // yesterday = the most recent working day (not today)
   const yesterdayDate = workingDays[0] || ""; // Most recent working day
   const todayDate = todayStr; // Always current date
+
+  console.log(`📆 Yesterday: ${yesterdayDate}, Today: ${todayDate}`);
+  console.log(`📋 Yesterday issues: ${issuesByDate[yesterdayDate]?.length || 0}, Today issues: ${issuesByDate[todayDate]?.length || 0}`);
 
   const blockers = issues.filter((issue) => {
     const labels = issue.fields.labels || [];
