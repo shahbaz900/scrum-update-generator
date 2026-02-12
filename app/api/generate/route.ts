@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Get Claude key from env
     const claudeKey = process.env.CLAUDE_API_KEY;
+    //claude api key
     if (!claudeKey) {
       return NextResponse.json(
         { error: "Claude API key not configured" },
