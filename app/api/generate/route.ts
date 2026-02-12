@@ -1,12 +1,12 @@
 /**
  * Scrum Update Generator API Route
- * 
+ *
  * ⚙️ Copilot CLI Was Used In Development:
  * - Used `gh copilot explain` to debug streaming response errors
  * - Used `gh copilot suggest` to optimize NextResponse handling
  * - Helped understand Jira API error handling patterns
  * - Assisted with TypeScript typing for ReadableStream
- * 
+ *
  * This endpoint:
  * 1. Accepts Jira credentials from the client
  * 2. Fetches recent issues from Jira API
@@ -16,17 +16,28 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Anthropic } from "@anthropic-ai/sdk";
-import { fetchJiraIssues, categorizeIssues, formatIssueForContext } from "@/lib/jira";
+import {
+  fetchJiraIssues,
+  categorizeIssues,
+  formatIssueForContext,
+} from "@/lib/jira";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { jiraUrl, jiraEmail, jiraToken, publicHolidays = [], timezone = "UTC", timezoneOffsetMinutes = 0 } = body;
+    const {
+      jiraUrl,
+      jiraEmail,
+      jiraToken,
+      publicHolidays = [],
+      timezone = "UTC",
+      timezoneOffsetMinutes = 0,
+    } = body;
 
     if (!jiraUrl || !jiraEmail || !jiraToken) {
       return NextResponse.json(
         { error: "Missing credentials" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!claudeKey) {
       return NextResponse.json(
         { error: "Claude API key not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -43,23 +54,33 @@ export async function POST(request: NextRequest) {
     const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
     console.log(`📊 Fetched ${issues.length} issues from Jira`);
     console.log(`🕐 Timezone offset: ${timezoneOffsetMinutes} minutes`);
-    
-    const categorized = categorizeIssues(issues, publicHolidays, timezoneOffsetMinutes);
-    console.log(`📅 Categorized: Yesterday=${categorized.yesterday.length}, Today=${categorized.today.length}, Blockers=${categorized.blockers.length}`);
+
+    const categorized = categorizeIssues(
+      issues,
+      publicHolidays,
+      timezoneOffsetMinutes,
+    );
+    console.log(
+      `📅 Categorized: Yesterday=${categorized.yesterday.length}, Today=${categorized.today.length}, Blockers=${categorized.blockers.length}`,
+    );
 
     // Format issues for Claude with rich context (comments, worklogs, changelog)
     const issuesText = `
 Yesterday's Work (${categorized.yesterdayDate}):
 ${
   categorized.yesterday.length > 0
-    ? categorized.yesterday.map((issue) => formatIssueForContext(issue)).join("\n\n")
+    ? categorized.yesterday
+        .map((issue) => formatIssueForContext(issue))
+        .join("\n\n")
     : "No issues"
 }
 
 Today's Work (${categorized.todayDate}${categorized.isWeekend ? " - Weekend" : ""}):
 ${
   categorized.today.length > 0
-    ? categorized.today.map((issue) => formatIssueForContext(issue)).join("\n\n")
+    ? categorized.today
+        .map((issue) => formatIssueForContext(issue))
+        .join("\n\n")
     : "No issues"
 }
 
@@ -85,7 +106,7 @@ ${
 
     // Stream response from Claude Haiku
     const stream = client.messages.stream({
-      model: "claude-3-5-haiku-20241022",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       messages: [
         {
@@ -124,8 +145,12 @@ ${issuesText}`,
       async start(controller) {
         try {
           // Send metadata first
-          controller.enqueue(new TextEncoder().encode(`[META]${JSON.stringify(metadata)}[|META]\n`));
-          
+          controller.enqueue(
+            new TextEncoder().encode(
+              `[META]${JSON.stringify(metadata)}[|META]\n`,
+            ),
+          );
+
           // Then stream Claude response
           for await (const event of stream) {
             if (
@@ -157,7 +182,7 @@ ${issuesText}`,
             ? error.message
             : "Failed to generate scrum update",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
