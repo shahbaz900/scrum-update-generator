@@ -16,7 +16,7 @@ export default function DocsPage() {
     },
     {
       q: "Can I export my scrum updates?",
-      a: "Yes! You can download updates as PDF, copy to clipboard, or share via WhatsApp and Teams directly from the app.",
+      a: "Yes! You can copy your scrum update and share it as text or PDF via Teams, Slack, WhatsApp, and email directly from the app.",
     },
     {
       q: "What happens to my saved updates?",

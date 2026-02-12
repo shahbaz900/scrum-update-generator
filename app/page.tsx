@@ -84,10 +84,15 @@ function shareOnTeams(text: string) {
   );
 }
 
-function shareViaEmail(text: string) {
+function shareViaEmail(text: string, provider: "gmail" | "outlook") {
   const subject = `Scrum Update - ${new Date().toLocaleDateString()}`;
   const body = encodeURIComponent(text);
-  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+  
+  if (provider === "gmail") {
+    window.open(`https://mail.google.com/mail/?view=cm&to=&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
+  } else if (provider === "outlook") {
+    window.open(`https://outlook.live.com/mail/0/compose?to=&subject=${encodeURIComponent(subject)}&body=${body}`, "_blank");
+  }
 }
 
 function extractPlainText(output: string): string {
@@ -117,6 +122,7 @@ export default function Home() {
   const [generationTime, setGenerationTime] = useState<Date | null>(null); // Store when generated
   const [isSaving, setIsSaving] = useState(false);
   const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
+  const [showEmailSelector, setShowEmailSelector] = useState(false);
 
   // Auto-dismiss tooltip after 5 seconds
   useEffect(() => {
@@ -599,15 +605,7 @@ export default function Home() {
 
               <button
                 className="button-action"
-                onClick={() => shareOnTeams(extractPlainText(output))}
-                title="Share on Microsoft Teams"
-              >
-                <span style={{ marginRight: '6px' }}>👥</span> Teams
-              </button>
-
-              <button
-                className="button-action"
-                onClick={() => shareViaEmail(extractPlainText(output))}
+                onClick={() => setShowEmailSelector(true)}
                 title="Share via Email"
               >
                 <span style={{ marginRight: '6px' }}>📧</span> Email
@@ -696,6 +694,41 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {showEmailSelector && (
+        <div className="modal-overlay" onClick={() => setShowEmailSelector(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Choose Email Provider</h3>
+            <p>Where would you like to send your scrum update?</p>
+            <div className="modal-buttons">
+              <button
+                className="modal-button gmail"
+                onClick={() => {
+                  shareViaEmail(extractPlainText(output), "gmail");
+                  setShowEmailSelector(false);
+                }}
+              >
+                <span>📧</span> Gmail
+              </button>
+              <button
+                className="modal-button outlook"
+                onClick={() => {
+                  shareViaEmail(extractPlainText(output), "outlook");
+                  setShowEmailSelector(false);
+                }}
+              >
+                <span>💼</span> Outlook
+              </button>
+            </div>
+            <button
+              className="modal-close"
+              onClick={() => setShowEmailSelector(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {tooltipMessage && (
         <div className="tooltip-notification">
