@@ -68,9 +68,9 @@ export async function fetchJiraIssues(
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
     const todayStr = today.toISOString().split("T")[0];
 
-    // JQL query to get recent issues INCLUDING subtasks and worklog activity
-    // This will fetch both parent issues and subtasks assigned to current user
-    const jql = `assignee = currentUser() AND (updated >= ${sevenDaysAgoStr} OR created >= ${sevenDaysAgoStr} OR worklogDate >= ${sevenDaysAgoStr}) ORDER BY updated DESC`;
+    // JQL query to get recent issues you worked on (even if reassigned)
+    // This includes: currently assigned, previously assigned, or issues you commented on
+    const jql = `(assignee = currentUser() OR assignee was currentUser() OR comment ~ currentUser()) AND updated >= ${sevenDaysAgoStr} ORDER BY updated DESC`;
 
     // Remove trailing slash if present
     const baseUrl = url.endsWith("/") ? url.slice(0, -1) : url;
@@ -107,9 +107,18 @@ export async function fetchJiraIssues(
     );
 
     console.log(`🔍 JQL Query: ${jql}`);
-    console.log(`📊 Found ${response.data.issues?.length || 0} issues`);
+    console.log(`📊 Jira API Response: Total=${response.data.total}, Returned=${response.data.issues?.length || 0}`);
+    
     if (response.data.issues && response.data.issues.length > 0) {
-      console.log(`📝 First issue: ${response.data.issues[0].key} - Updated: ${response.data.issues[0].fields.updated}`);
+      console.log(`📝 Issues found:`);
+      response.data.issues.slice(0, 5).forEach((issue: any) => {
+        console.log(`  - ${issue.key} [${issue.fields.issuetype?.name}]: ${issue.fields.summary}`);
+        console.log(`    Updated: ${issue.fields.updated}, Status: ${issue.fields.status?.name}`);
+      });
+    } else {
+      console.log(`⚠️ No issues returned from Jira API`);
+      console.log(`   Email: ${email.substring(0, 3)}***`);
+      console.log(`   URL: ${baseUrl}`);
     }
 
     return response.data.issues || [];
