@@ -689,7 +689,7 @@ export default function Home() {
 
           {loading && !output && (
             <div className="loading">
-              🔄 Fetching Jira data and generating with Claude...
+               Analyzing your work on Jira & generating AI-powered scrum update...
             </div>
           )}
         </div>
