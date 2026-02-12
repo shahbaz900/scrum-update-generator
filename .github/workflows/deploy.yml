@@ -1,9 +1,14 @@
-name: Deploy to GitHub Pages
+# DISABLED - This workflow has been disabled because the app now uses API routes
+# which require a Node.js server. Deploy to Vercel instead.
+# To completely remove this workflow, delete this file from GitHub.
+
+name: Deploy to GitHub Pages (DISABLED)
 
 on:
-  push:
-    branches:
-      - main
+  # Commented out to disable automatic triggering
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,2 @@
+# This file has been renamed to .delete - please manually delete both this file and deploy.yml
+# The GitHub Actions workflow is no longer needed since you're deploying to Vercel
