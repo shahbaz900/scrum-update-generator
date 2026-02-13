@@ -84,7 +84,7 @@ function shareOnTeams(text: string) {
   );
 }
 
-function shareViaEmail(text: string, provider: "gmail" | "outlook") {
+function shareViaEmail(text: string) {
   const subject = `Scrum Update - ${new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -93,11 +93,8 @@ function shareViaEmail(text: string, provider: "gmail" | "outlook") {
   })}`;
   const body = encodeURIComponent(text);
   
-  if (provider === "gmail") {
-    window.open(`https://mail.google.com/mail/?view=cm&to=&su=${encodeURIComponent(subject)}&body=${body}`, "_blank");
-  } else if (provider === "outlook") {
-    window.open(`https://outlook.live.com/mail/0/compose?to=&subject=${encodeURIComponent(subject)}&body=${body}`, "_blank");
-  }
+  // Opens default email client on all devices (mail app on mobile, Outlook/Mail on desktop)
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
 }
 
 function extractPlainText(output: string): string {
@@ -158,7 +155,6 @@ export default function Home() {
       description: "Complete API documentation with examples and best practices"
     },
   ]);
-  const [showEmailSelector, setShowEmailSelector] = useState(false);
 
   // Auto-dismiss tooltip after 5 seconds
   useEffect(() => {
@@ -956,7 +952,7 @@ export default function Home() {
 
               <button
                 className="button-action"
-                onClick={() => setShowEmailSelector(true)}
+                onClick={() => shareViaEmail(extractPlainText(output))}
                 title="Share via email"
               >
                 <span style={{ marginRight: '6px' }}>📧</span> Email
@@ -1049,41 +1045,6 @@ export default function Home() {
       {tooltipMessage && (
         <div className="tooltip-notification">
           {tooltipMessage}
-        </div>
-      )}
-
-      {showEmailSelector && (
-        <div className="modal-overlay" onClick={() => setShowEmailSelector(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Share via Email</h2>
-            <p>Choose your email provider:</p>
-            <div className="modal-buttons">
-              <button
-                className="button-primary"
-                onClick={() => {
-                  shareViaEmail(extractPlainText(output), "gmail");
-                  setShowEmailSelector(false);
-                }}
-              >
-                📧 Open Gmail
-              </button>
-              <button
-                className="button-primary"
-                onClick={() => {
-                  shareViaEmail(extractPlainText(output), "outlook");
-                  setShowEmailSelector(false);
-                }}
-              >
-                📧 Open Outlook
-              </button>
-            </div>
-            <button
-              className="modal-close"
-              onClick={() => setShowEmailSelector(false)}
-            >
-              Cancel
-            </button>
-          </div>
         </div>
       )}
     </main>
