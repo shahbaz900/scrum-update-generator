@@ -572,6 +572,39 @@ p {
   main {
     max-width: 100%;
   }
+
+  .toolbar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .left-actions {
+    width: 100%;
+  }
+
+  .left-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .right-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .right-actions .button-action {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+
+  .button-action {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
 }
 
 /* Documentation Page */

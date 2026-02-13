@@ -762,47 +762,72 @@ export default function Home() {
                       borderRadius: '4px',
                       border: '1px solid #e5e7eb'
                     }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '100px 150px 100px 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          value={issue.key}
-                          onChange={(e) => updateDummyIssue(idx, 'key', e.target.value)}
-                          placeholder="Key"
-                          style={{
-                            padding: '6px 8px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            fontSize: '11px'
-                          }}
-                        />
-                        <select
-                          value={issue.status || "To Do"}
-                          onChange={(e) => updateDummyIssue(idx, 'status', e.target.value)}
-                          style={{
-                            padding: '6px 8px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            fontSize: '11px'
-                          }}
-                        >
-                          <option>To Do</option>
-                          <option>In Progress</option>
-                          <option>In Review</option>
-                          <option>Done</option>
-                          <option>Blocked</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={issue.assignee || ""}
-                          onChange={(e) => updateDummyIssue(idx, 'assignee', e.target.value)}
-                          placeholder="Assignee"
-                          style={{
-                            padding: '6px 8px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            fontSize: '11px'
-                          }}
-                        />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            value={issue.key}
+                            onChange={(e) => updateDummyIssue(idx, 'key', e.target.value)}
+                            placeholder="Key"
+                            style={{
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              minWidth: '80px',
+                              flex: '0 1 auto'
+                            }}
+                          />
+                          <select
+                            value={issue.status || "To Do"}
+                            onChange={(e) => updateDummyIssue(idx, 'status', e.target.value)}
+                            style={{
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              minWidth: '100px',
+                              flex: '0 1 auto'
+                            }}
+                          >
+                            <option>To Do</option>
+                            <option>In Progress</option>
+                            <option>In Review</option>
+                            <option>Done</option>
+                            <option>Blocked</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={issue.assignee || ""}
+                            onChange={(e) => updateDummyIssue(idx, 'assignee', e.target.value)}
+                            placeholder="Assignee"
+                            style={{
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              minWidth: '100px',
+                              flex: '1 1 auto'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeDummyIssue(idx)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#fee2e2',
+                              color: '#991b1b',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              fontWeight: '500',
+                              flex: '0 1 auto'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
                         <textarea
                           value={issue.summary}
                           onChange={(e) => updateDummyIssue(idx, 'summary', e.target.value)}
@@ -813,40 +838,25 @@ export default function Home() {
                             borderRadius: '4px',
                             fontSize: '11px',
                             minHeight: '40px',
+                            fontFamily: 'inherit',
+                            width: '100%'
+                          }}
+                        />
+                        <textarea
+                          value={issue.description || ""}
+                          onChange={(e) => updateDummyIssue(idx, 'description', e.target.value)}
+                          placeholder="Description (optional)"
+                          style={{
+                            width: '100%',
+                            padding: '6px 8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            minHeight: '50px',
                             fontFamily: 'inherit'
                           }}
                         />
-                        <button
-                          type="button"
-                          onClick={() => removeDummyIssue(idx)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#fee2e2',
-                            color: '#991b1b',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          ✕
-                        </button>
                       </div>
-                      <textarea
-                        value={issue.description || ""}
-                        onChange={(e) => updateDummyIssue(idx, 'description', e.target.value)}
-                        placeholder="Description (optional)"
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          minHeight: '50px',
-                          fontFamily: 'inherit'
-                        }}
-                      />
                     </div>
                   ))}
 
