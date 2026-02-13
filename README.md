@@ -1,3 +1,6 @@
+<img width="1000" height="420" alt="image" src="https://github.com/user-attachments/assets/c20ce9c8-ac35-4f7e-8f0e-02a774d8552a" />
+
+
 # 🚀 Scrum Update Generator
 
 Lightning-fast Jira scrum update generator powered by Claude AI Haiku.
