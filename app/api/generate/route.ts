@@ -22,6 +22,129 @@ import {
   formatIssueForContext,
 } from "@/lib/jira";
 
+// Dummy Jira data for demo/testing purposes
+function getDummyJiraData() {
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 86400000);
+
+  return [
+    {
+      key: "DEMO-101",
+      fields: {
+        summary: "Fix authentication flow bug",
+        description: "OAuth token refresh was failing on mobile devices",
+        assignee: { displayName: "John Developer" },
+        issuetype: { name: "Bug" },
+        status: { name: "Done" },
+        created: new Date(now.getTime() - 604800000).toISOString(),
+        updated: yesterday.toISOString(),
+        comment: {
+          comments: [
+            { body: "Found the issue in token refresh logic", created: yesterday.toISOString(), author: { displayName: "John Developer" } },
+            { body: "Fixed by implementing exponential backoff for retries", created: yesterday.toISOString(), author: { displayName: "John Developer" } },
+            { body: "Merged PR #456 after code review ✅", created: yesterday.toISOString(), author: { displayName: "Code Reviewer" } },
+          ],
+        },
+        worklog: {
+          worklogs: [
+            { timeSpent: "4h", started: yesterday.toISOString(), author: { displayName: "John Developer" } },
+          ],
+        },
+        changelog: {
+          histories: [
+            { created: yesterday.toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+            { created: yesterday.toISOString(), items: [{ field: "status", fromString: "In Progress", toString: "Done" }] },
+          ],
+        },
+      },
+    },
+    {
+      key: "DEMO-102",
+      fields: {
+        summary: "Implement API rate limiting",
+        description: "Add rate limiting to prevent abuse and ensure fair resource allocation",
+        assignee: { displayName: "Sarah Backend" },
+        issuetype: { name: "Story" },
+        status: { name: "In Progress" },
+        created: new Date(now.getTime() - 604800000).toISOString(),
+        updated: now.toISOString(),
+        comment: {
+          comments: [
+            { body: "Started implementation using Redis", created: now.toISOString(), author: { displayName: "Sarah Backend" } },
+            { body: "Design review approved, need to finalize DB schema for rate limit tracking", created: now.toISOString(), author: { displayName: "Tech Lead" } },
+          ],
+        },
+        worklog: {
+          worklogs: [
+            { timeSpent: "2h", started: now.toISOString(), author: { displayName: "Sarah Backend" } },
+          ],
+        },
+        changelog: {
+          histories: [
+            { created: new Date(now.getTime() - 3600000).toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+          ],
+        },
+      },
+    },
+    {
+      key: "DEMO-103",
+      fields: {
+        summary: "Design database schema for analytics",
+        description: "Create optimized schema for storing and querying user analytics data",
+        assignee: { displayName: "Mike Database" },
+        issuetype: { name: "Story" },
+        status: { name: "Blocked" },
+        created: new Date(now.getTime() - 604800000).toISOString(),
+        updated: now.toISOString(),
+        comment: {
+          comments: [
+            { body: "Schema design complete and ready for review", created: now.toISOString(), author: { displayName: "Mike Database" } },
+            { body: "Waiting on architect approval before proceeding with implementation 🔄", created: now.toISOString(), author: { displayName: "Mike Database" } },
+          ],
+        },
+        worklog: {
+          worklogs: [],
+        },
+        changelog: {
+          histories: [
+            { created: new Date(now.getTime() - 86400000).toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Review" }] },
+          ],
+        },
+      },
+    },
+    {
+      key: "DEMO-104",
+      fields: {
+        summary: "Update API documentation",
+        description: "Complete API documentation with examples and best practices",
+        assignee: { displayName: "Emma Docs" },
+        issuetype: { name: "Task" },
+        status: { name: "Done" },
+        created: new Date(now.getTime() - 604800000).toISOString(),
+        updated: yesterday.toISOString(),
+        comment: {
+          comments: [
+            { body: "Documented all endpoints with curl examples", created: yesterday.toISOString(), author: { displayName: "Emma Docs" } },
+            { body: "Added authentication and error handling sections", created: yesterday.toISOString(), author: { displayName: "Emma Docs" } },
+            { body: "Documentation review completed and merged to main docs 🎉", created: yesterday.toISOString(), author: { displayName: "Tech Lead" } },
+          ],
+        },
+        worklog: {
+          worklogs: [
+            { timeSpent: "1h", started: yesterday.toISOString(), author: { displayName: "Emma Docs" } },
+          ],
+        },
+        changelog: {
+          histories: [
+            { created: yesterday.toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+            { created: yesterday.toISOString(), items: [{ field: "status", fromString: "In Progress", toString: "Done" }] },
+          ],
+        },
+      },
+    },
+  ];
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,6 +155,7 @@ export async function POST(request: NextRequest) {
       publicHolidays = [],
       timezone = "UTC",
       timezoneOffsetMinutes = 0,
+      dummyData, // Accept optional custom dummy data
     } = body;
 
     if (!jiraUrl || !jiraEmail || !jiraToken) {
@@ -49,7 +173,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    // Check if using dummy data mode
+    let issues;
+    if (jiraUrl === "DUMMY_JIRA_DATA") {
+      issues = dummyData || getDummyJiraData();
+    } else {
+      issues = await fetchJiraIssues(jiraUrl, jiraEmail, jiraToken);
+    }
     const categorized = categorizeIssues(
       issues,
       publicHolidays,

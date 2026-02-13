@@ -123,6 +123,37 @@ export default function Home() {
   const [isSaving, setIsSaving] = useState(false);
   const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
   const [showEmailSelector, setShowEmailSelector] = useState(false);
+  const [useDummyData, setUseDummyData] = useState(false);
+  const [dummyIssues, setDummyIssues] = useState([
+    { 
+      key: "DEMO-101", 
+      summary: "Fix authentication flow bug",
+      assignee: "John Developer",
+      status: "Done",
+      description: "OAuth token refresh was failing on mobile devices"
+    },
+    { 
+      key: "DEMO-102", 
+      summary: "Implement API rate limiting",
+      assignee: "Sarah Backend",
+      status: "In Progress",
+      description: "Add rate limiting to prevent abuse and ensure fair resource allocation"
+    },
+    { 
+      key: "DEMO-103", 
+      summary: "Design database schema for analytics",
+      assignee: "Mike Database",
+      status: "Blocked",
+      description: "Create optimized schema for storing and querying user analytics data"
+    },
+    { 
+      key: "DEMO-104", 
+      summary: "Update API documentation",
+      assignee: "Emma Docs",
+      status: "Done",
+      description: "Complete API documentation with examples and best practices"
+    },
+  ]);
 
   // Auto-dismiss tooltip after 5 seconds
   useEffect(() => {
@@ -204,20 +235,56 @@ export default function Home() {
     }));
   };
 
+  const loadDummyData = () => {
+    setUseDummyData(true);
+    setSetupForm({
+      jiraUrl: "DUMMY_JIRA_DATA",
+      jiraEmail: "judge@scrum-demo.test",
+      jiraToken: "dummy_token_12345",
+      publicHolidays: [],
+    });
+  };
+
+  const updateDummyIssue = (index: number, field: string, value: string) => {
+    const updated = [...dummyIssues];
+    updated[index] = { ...updated[index], [field]: value };
+    setDummyIssues(updated);
+  };
+
+  const addDummyIssue = () => {
+    setDummyIssues([
+      ...dummyIssues,
+      { 
+        key: `DEMO-${100 + dummyIssues.length}`, 
+        summary: "New feature or task",
+        assignee: "Team Member",
+        status: "To Do",
+        description: "Description of the work"
+      },
+    ]);
+  };
+
+  const removeDummyIssue = (index: number) => {
+    setDummyIssues(dummyIssues.filter((_, i) => i !== index));
+  };
+
   const testConnection = async () => {
     setTesting(true);
     setError("");
 
     try {
-      const response = await fetch("/api/test-jira", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(setupForm),
-      });
+      // Skip API call if using dummy data
+      if (setupForm.jiraUrl !== "DUMMY_JIRA_DATA") {
+        const response = await fetch("/api/test-jira", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(setupForm),
+        });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Connection failed");
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Connection failed");
+        }
       }
 
       // Save to localStorage
@@ -256,14 +323,126 @@ export default function Home() {
     setGenerationTime(new Date());
 
     try {
+      const payload: any = {
+        ...credentials,
+        timezone: getUserTimezone(),
+        timezoneOffsetMinutes: getTimezoneOffset(),
+      };
+
+      // Add dummy data if in dummy mode
+      if (useDummyData && credentials.jiraUrl === "DUMMY_JIRA_DATA") {
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - 86400000);
+        const weekAgo = new Date(now.getTime() - 604800000);
+
+        payload.dummyData = [
+          {
+            key: dummyIssues[0]?.key || "DEMO-101",
+            fields: {
+              summary: dummyIssues[0]?.summary || "Fix authentication flow bug",
+              description: dummyIssues[0]?.description || "OAuth token refresh was failing on mobile devices",
+              assignee: { displayName: dummyIssues[0]?.assignee || "John Developer" },
+              issuetype: { name: "Bug" },
+              status: { name: dummyIssues[0]?.status || "Done" },
+              created: weekAgo.toISOString(),
+              updated: yesterday.toISOString(),
+              comment: {
+                comments: [
+                  { body: "Found the issue in token refresh logic", created: yesterday.toISOString(), author: { displayName: dummyIssues[0]?.assignee || "John Developer" } },
+                  { body: "Fixed by implementing exponential backoff for retries", created: yesterday.toISOString(), author: { displayName: dummyIssues[0]?.assignee || "John Developer" } },
+                  { body: "Merged PR #456 after code review ✅", created: yesterday.toISOString(), author: { displayName: "Code Reviewer" } },
+                ],
+              },
+              worklog: { worklogs: [{ timeSpent: "4h", started: yesterday.toISOString(), author: { displayName: dummyIssues[0]?.assignee || "John Developer" } }] },
+              changelog: {
+                histories: [
+                  { created: yesterday.toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+                  { created: yesterday.toISOString(), items: [{ field: "status", fromString: "In Progress", toString: "Done" }] },
+                ],
+              },
+            },
+          },
+          {
+            key: dummyIssues[1]?.key || "DEMO-102",
+            fields: {
+              summary: dummyIssues[1]?.summary || "Implement API rate limiting",
+              description: dummyIssues[1]?.description || "Add rate limiting to prevent abuse",
+              assignee: { displayName: dummyIssues[1]?.assignee || "Sarah Backend" },
+              issuetype: { name: "Story" },
+              status: { name: dummyIssues[1]?.status || "In Progress" },
+              created: weekAgo.toISOString(),
+              updated: now.toISOString(),
+              comment: {
+                comments: [
+                  { body: "Started implementation using Redis", created: now.toISOString(), author: { displayName: dummyIssues[1]?.assignee || "Sarah Backend" } },
+                  { body: "Design review approved, need to finalize DB schema", created: now.toISOString(), author: { displayName: "Tech Lead" } },
+                ],
+              },
+              worklog: { worklogs: [{ timeSpent: "2h", started: now.toISOString(), author: { displayName: dummyIssues[1]?.assignee || "Sarah Backend" } }] },
+              changelog: {
+                histories: [
+                  { created: new Date(now.getTime() - 3600000).toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+                ],
+              },
+            },
+          },
+          {
+            key: dummyIssues[2]?.key || "DEMO-103",
+            fields: {
+              summary: dummyIssues[2]?.summary || "Design database schema for analytics",
+              description: dummyIssues[2]?.description || "Create optimized schema for analytics",
+              assignee: { displayName: dummyIssues[2]?.assignee || "Mike Database" },
+              issuetype: { name: "Story" },
+              status: { name: dummyIssues[2]?.status || "Blocked" },
+              created: weekAgo.toISOString(),
+              updated: now.toISOString(),
+              comment: {
+                comments: [
+                  { body: "Schema design complete and ready for review", created: now.toISOString(), author: { displayName: dummyIssues[2]?.assignee || "Mike Database" } },
+                  { body: "Waiting on architect approval before proceeding 🔄", created: now.toISOString(), author: { displayName: dummyIssues[2]?.assignee || "Mike Database" } },
+                ],
+              },
+              worklog: { worklogs: [] },
+              changelog: {
+                histories: [
+                  { created: new Date(now.getTime() - 86400000).toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Review" }] },
+                ],
+              },
+            },
+          },
+          {
+            key: dummyIssues[3]?.key || "DEMO-104",
+            fields: {
+              summary: dummyIssues[3]?.summary || "Update API documentation",
+              description: dummyIssues[3]?.description || "Complete API documentation",
+              assignee: { displayName: dummyIssues[3]?.assignee || "Emma Docs" },
+              issuetype: { name: "Task" },
+              status: { name: dummyIssues[3]?.status || "Done" },
+              created: weekAgo.toISOString(),
+              updated: yesterday.toISOString(),
+              comment: {
+                comments: [
+                  { body: "Documented all endpoints with curl examples", created: yesterday.toISOString(), author: { displayName: dummyIssues[3]?.assignee || "Emma Docs" } },
+                  { body: "Added authentication and error handling sections", created: yesterday.toISOString(), author: { displayName: dummyIssues[3]?.assignee || "Emma Docs" } },
+                  { body: "Documentation review completed and merged 🎉", created: yesterday.toISOString(), author: { displayName: "Tech Lead" } },
+                ],
+              },
+              worklog: { worklogs: [{ timeSpent: "1h", started: yesterday.toISOString(), author: { displayName: dummyIssues[3]?.assignee || "Emma Docs" } }] },
+              changelog: {
+                histories: [
+                  { created: yesterday.toISOString(), items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
+                  { created: yesterday.toISOString(), items: [{ field: "status", fromString: "In Progress", toString: "Done" }] },
+                ],
+              },
+            },
+          },
+        ];
+      }
+
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...credentials,
-          timezone: getUserTimezone(),
-          timezoneOffsetMinutes: getTimezoneOffset(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -293,10 +472,15 @@ export default function Home() {
         
         setOutput(result);
       }
+
+      // Final validation
+      if (!result || result.trim().length === 0) {
+        throw new Error("Empty response from API. Please check your Claude API key configuration.");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
-      console.error("Error:", err);
+      console.error("Error generating scrum update:", err);
     } finally {
       setLoading(false);
     }
@@ -330,7 +514,18 @@ export default function Home() {
     }
   };
 
-  const parseOutputSections = (text: string) => {
+  const parseOutputSections = (text: string | null | undefined) => {
+    if (!text || typeof text !== 'string') {
+      return {
+        yesterdayDate: undefined,
+        todayDate: undefined,
+        isWeekend: false,
+        yesterday: "",
+        today: "",
+        blockers: "",
+      };
+    }
+
     const metaMatch = text.match(/\[META\]([\s\S]*?)\[\|META\]/);
     const yesterdayMatch = text.match(/\[YESTERDAY\]([\s\S]*?)(?=\[TODAY\]|$)/);
     const todayMatch = text.match(/\[TODAY\]([\s\S]*?)(?=\[BLOCKERS\]|$)/);
@@ -523,18 +718,157 @@ export default function Home() {
 
               {error && <div className="error">{error}</div>}
 
-              <button
-                className={`button button-primary ${testing ? "loading" : ""}`}
-                onClick={testConnection}
-                disabled={
-                  testing ||
-                  !setupForm.jiraUrl ||
-                  !setupForm.jiraEmail ||
-                  !setupForm.jiraToken
-                }
-              >
-                {testing ? "Testing..." : "Test & Connect"}
-              </button>
+              <div className="button-group" style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className={`button button-primary ${testing ? "loading" : ""}`}
+                  onClick={testConnection}
+                  disabled={
+                    testing ||
+                    !setupForm.jiraUrl ||
+                    !setupForm.jiraEmail ||
+                    !setupForm.jiraToken
+                  }
+                >
+                  {testing ? "Testing..." : "Test & Connect"}
+                </button>
+
+                <button
+                  className="button button-secondary"
+                  onClick={loadDummyData}
+                  title="Load demo data for testing (judges)"
+                >
+                  🎯 Load Demo Data
+                </button>
+              </div>
+
+              {useDummyData && (
+                <div className="dummy-data-editor" style={{
+                  marginTop: '20px',
+                  padding: '15px',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '6px',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  <h3 style={{ marginTop: 0, marginBottom: '12px' }}>📝 Edit Demo Issues (Optional)</h3>
+                  <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                    Customize the demo issues that will be used to generate your scrum update:
+                  </p>
+
+                  {dummyIssues.map((issue, idx) => (
+                    <div key={idx} style={{
+                      marginBottom: '10px',
+                      padding: '10px',
+                      backgroundColor: 'white',
+                      borderRadius: '4px',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '100px 150px 100px 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          value={issue.key}
+                          onChange={(e) => updateDummyIssue(idx, 'key', e.target.value)}
+                          placeholder="Key"
+                          style={{
+                            padding: '6px 8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            fontSize: '11px'
+                          }}
+                        />
+                        <select
+                          value={issue.status || "To Do"}
+                          onChange={(e) => updateDummyIssue(idx, 'status', e.target.value)}
+                          style={{
+                            padding: '6px 8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            fontSize: '11px'
+                          }}
+                        >
+                          <option>To Do</option>
+                          <option>In Progress</option>
+                          <option>In Review</option>
+                          <option>Done</option>
+                          <option>Blocked</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={issue.assignee || ""}
+                          onChange={(e) => updateDummyIssue(idx, 'assignee', e.target.value)}
+                          placeholder="Assignee"
+                          style={{
+                            padding: '6px 8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            fontSize: '11px'
+                          }}
+                        />
+                        <textarea
+                          value={issue.summary}
+                          onChange={(e) => updateDummyIssue(idx, 'summary', e.target.value)}
+                          placeholder="Summary"
+                          style={{
+                            padding: '6px 8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            minHeight: '40px',
+                            fontFamily: 'inherit'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeDummyIssue(idx)}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: '500'
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <textarea
+                        value={issue.description || ""}
+                        onChange={(e) => updateDummyIssue(idx, 'description', e.target.value)}
+                        placeholder="Description (optional)"
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          minHeight: '50px',
+                          fontFamily: 'inherit'
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addDummyIssue}
+                    style={{
+                      marginTop: '10px',
+                      padding: '8px 12px',
+                      backgroundColor: '#dbeafe',
+                      color: '#1e40af',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    + Add Issue
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
