@@ -718,7 +718,7 @@ export default function Home() {
 
               {error && <div className="error">{error}</div>}
 
-              <div className="button-group" style={{ display: 'flex', gap: '10px' }}>
+              <div className="button-group" style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
                 <button
                   className={`button button-primary ${testing ? "loading" : ""}`}
                   onClick={testConnection}
@@ -728,6 +728,7 @@ export default function Home() {
                     !setupForm.jiraEmail ||
                     !setupForm.jiraToken
                   }
+                  style={{ flex: '1 1 auto', minWidth: '140px' }}
                 >
                   {testing ? "Testing..." : "Test & Connect"}
                 </button>
@@ -736,6 +737,7 @@ export default function Home() {
                   className="button button-secondary"
                   onClick={loadDummyData}
                   title="Load demo data for testing (judges)"
+                  style={{ flex: '1 1 auto', minWidth: '140px' }}
                 >
                   🎯 Load Demo Data
                 </button>
