@@ -691,10 +691,12 @@ p {
   }
 
   .button-group {
+    flex-direction: column;
     gap: 6px !important;
   }
 
   .button-group button {
+    width: 100%;
     padding: 10px 12px;
     font-size: 0.8rem;
   }

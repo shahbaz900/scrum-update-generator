@@ -85,7 +85,12 @@ function shareOnTeams(text: string) {
 }
 
 function shareViaEmail(text: string, provider: "gmail" | "outlook") {
-  const subject = `Scrum Update - ${new Date().toLocaleDateString()}`;
+  const subject = `Scrum Update - ${new Date().toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })}`;
   const body = encodeURIComponent(text);
   
   if (provider === "gmail") {
@@ -122,7 +127,6 @@ export default function Home() {
   const [generationTime, setGenerationTime] = useState<Date | null>(null); // Store when generated
   const [isSaving, setIsSaving] = useState(false);
   const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
-  const [showEmailSelector, setShowEmailSelector] = useState(false);
   const [useDummyData, setUseDummyData] = useState(false);
   const [dummyIssues, setDummyIssues] = useState([
     { 
@@ -154,6 +158,7 @@ export default function Home() {
       description: "Complete API documentation with examples and best practices"
     },
   ]);
+  const [showEmailSelector, setShowEmailSelector] = useState(false);
 
   // Auto-dismiss tooltip after 5 seconds
   useEffect(() => {
@@ -952,7 +957,7 @@ export default function Home() {
               <button
                 className="button-action"
                 onClick={() => setShowEmailSelector(true)}
-                title="Share via Email"
+                title="Share via email"
               >
                 <span style={{ marginRight: '6px' }}>📧</span> Email
               </button>
@@ -1041,29 +1046,35 @@ export default function Home() {
         </div>
       </div>
 
+      {tooltipMessage && (
+        <div className="tooltip-notification">
+          {tooltipMessage}
+        </div>
+      )}
+
       {showEmailSelector && (
         <div className="modal-overlay" onClick={() => setShowEmailSelector(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Choose Email Provider</h3>
-            <p>Where would you like to send your scrum update?</p>
+            <h2>Share via Email</h2>
+            <p>Choose your email provider:</p>
             <div className="modal-buttons">
               <button
-                className="modal-button gmail"
+                className="button-primary"
                 onClick={() => {
                   shareViaEmail(extractPlainText(output), "gmail");
                   setShowEmailSelector(false);
                 }}
               >
-                <span>📧</span> Gmail
+                📧 Open Gmail
               </button>
               <button
-                className="modal-button outlook"
+                className="button-primary"
                 onClick={() => {
                   shareViaEmail(extractPlainText(output), "outlook");
                   setShowEmailSelector(false);
                 }}
               >
-                <span>💼</span> Outlook
+                📧 Open Outlook
               </button>
             </div>
             <button
@@ -1073,12 +1084,6 @@ export default function Home() {
               Cancel
             </button>
           </div>
-        </div>
-      )}
-
-      {tooltipMessage && (
-        <div className="tooltip-notification">
-          {tooltipMessage}
         </div>
       )}
     </main>
