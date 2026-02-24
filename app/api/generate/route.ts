@@ -21,6 +21,10 @@ import {
   categorizeIssues,
   formatIssueForContext,
 } from "@/lib/jira";
+import {
+  getClientIp,
+  checkRateLimit,
+} from "@/lib/rateLimit";
 
 // Dummy Jira data for demo/testing purposes
 function getDummyJiraData() {
@@ -165,6 +169,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get client IP and check rate limit
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(clientIp);
+
+    if (!rateLimit.allowed) {
+      const resetDate = new Date(rateLimit.resetTime);
+      return NextResponse.json(
+        {
+          error: `Rate limit exceeded: 5 requests per hour per IP`,
+          resetTime: resetDate.toISOString(),
+          retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil(
+              (rateLimit.resetTime - Date.now()) / 1000
+            ).toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": resetDate.toISOString(),
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+          },
+        },
+      );
+    }
+
     const claudeKey = process.env.CLAUDE_API_KEY;
     if (!claudeKey) {
       return NextResponse.json(
@@ -293,6 +323,9 @@ ${issuesText}`,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Transfer-Encoding": "chunked",
+        "X-RateLimit-Remaining": rateLimit.remaining.toString(),
+        "X-RateLimit-Limit": rateLimit.limit.toString(),
+        "X-RateLimit-Reset": new Date(rateLimit.resetTime).toISOString(),
       },
     });
   } catch (error) {

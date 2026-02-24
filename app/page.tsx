@@ -125,6 +125,8 @@ export default function Home() {
   const [isSaving, setIsSaving] = useState(false);
   const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
   const [useDummyData, setUseDummyData] = useState(false);
+  const [rateLimitRemaining, setRateLimitRemaining] = useState<number>(5);
+  const [rateLimitReset, setRateLimitReset] = useState<Date | null>(null);
   const [dummyIssues, setDummyIssues] = useState([
     { 
       key: "DEMO-101", 
@@ -448,7 +450,39 @@ export default function Home() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Extract rate limit info from headers
+        const remaining = response.headers.get("X-RateLimit-Remaining");
+        const reset = response.headers.get("X-RateLimit-Reset");
+        
+        if (remaining !== null) {
+          setRateLimitRemaining(parseInt(remaining, 10));
+        }
+        if (reset) {
+          setRateLimitReset(new Date(reset));
+        }
+        
+        // Handle rate limit error
+        if (response.status === 429) {
+          const retryAfter = response.headers.get("Retry-After");
+          const minutesUntilReset = retryAfter ? Math.ceil(parseInt(retryAfter, 10) / 60) : "less than a minute";
+          throw new Error(`Rate limit exceeded: 5 requests per hour. Try again in ${minutesUntilReset === 0 ? "less than a minute" : minutesUntilReset + " minute(s)"}.`);
+        }
+        
         throw new Error(errorData.error || "Failed to generate scrum update");
+      }
+
+      // Extract rate limit headers from successful response
+      const remaining = response.headers.get("X-RateLimit-Remaining");
+      const reset = response.headers.get("X-RateLimit-Reset");
+      
+      if (remaining !== null) {
+        setRateLimitRemaining(parseInt(remaining, 10));
+      }
+      if (reset) {
+        setRateLimitReset(new Date(reset));
+      }
+        setRateLimitReset(new Date(reset));
       }
 
       const reader = response.body?.getReader();
@@ -930,6 +964,11 @@ export default function Home() {
               <span className="icon">📄</span>
               {loading ? "Generating..." : "Generate Scrum Update"}
             </button>
+          </div>
+
+          <div className="rate-limit-info">
+            <span className="plan-badge">📊 Free Plan</span>
+            <span className="remaining-requests">{rateLimitRemaining}/5 requests/hour</span>
           </div>
 
           {output && (
