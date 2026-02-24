@@ -482,8 +482,6 @@ export default function Home() {
       if (reset) {
         setRateLimitReset(new Date(reset));
       }
-        setRateLimitReset(new Date(reset));
-      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No response stream");
